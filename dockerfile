@@ -1,12 +1,10 @@
 # Dockerfile
-FROM node:20
+FROM node:20 as builder
 
 WORKDIR /app
 
 # Copie des fichiers de dépendances
 COPY package*.json ./
-
-# Installation des dépendances
 RUN npm install
 
 # Copie du reste des fichiers
@@ -15,10 +13,15 @@ COPY . .
 # Build de l'application
 RUN npm run build
 
-# Installation d'un serveur léger
-RUN npm install -g serve
+# Étape Nginx
+FROM nginx:stable-alpine
+
+# Copie de la configuration Nginx
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Copie des fichiers de build depuis l'étape précédente
+COPY --from=builder /app/dist /usr/share/nginx/html
 
 EXPOSE 8088
 
-# Démarrage du serveur
-CMD ["serve", "-s", "dist", "-l", "8088"]
+CMD ["nginx", "-g", "daemon off;"]

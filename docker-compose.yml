@@ -4,5 +4,5 @@ services:
     ports:
       - "8088:8088"
     volumes:
-      - ./public/images:/app/dist/images:ro
+      - ./public/images:/usr/share/nginx/html/images:ro
     restart: unless-stopped
