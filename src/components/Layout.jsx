@@ -162,7 +162,14 @@ const Layout = () => {
 
       {/* Logo Section */}
       <div className="py-4 px-6" style={{ backgroundColor: currentColors.background }}>
-        <img src="/logo.svg" alt="Inkorner Logo" className="h-28 mx-auto" />
+        <img 
+          src="/logo.svg" 
+          alt="Inkorner Logo" 
+          className="h-28 mx-auto" 
+          style={{
+            filter: currentColors.primary === '#1A1A1A' ? 'none' : 'brightness(0.2) contrast(1.2)'
+          }}
+        />
       </div>
 
       {/* Navigation */}
@@ -273,7 +280,13 @@ const Layout = () => {
                   alt={category}
                   className="w-full h-full object-contain"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent">
+                <div className="absolute inset-0" style={{
+                    background: `linear-gradient(to top, 
+                      ${currentColors.primary}CC,
+                      ${currentColors.primary}40,
+                      transparent
+                    )`
+                  }}>
                   <div className="absolute bottom-0 left-0 right-0 p-4">
                     <h3 className="text-lg font-semibold text-white mb-2">{category}</h3>
                     <button 
