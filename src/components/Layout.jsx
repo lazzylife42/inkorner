@@ -54,7 +54,7 @@ const Layout = () => {
       name: "Aurore Boréale",
       primary: "#5f0f40",
       secondary: "#9a0f58",
-      accent: "#0a8754",
+      accent: "#B895AA",
       background: "#f0f7f4",
       text: "#ffffff"
     },
@@ -310,7 +310,7 @@ const Layout = () => {
               className="px-6 py-3 rounded transition-colors font-medium"
               style={{ 
                 backgroundColor: currentColors.accent,
-                color: currentColors.primary
+                color: currentColors.text
               }}
             >
               Voir toutes les catégories
