@@ -1,4 +1,4 @@
-# Logs
+## Logs
 logs
 *.log
 npm-debug.log*
@@ -7,10 +7,26 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependency directories
 node_modules
 dist
 dist-ssr
 *.local
+
+# Docker
+# Ignore Docker-related files and directories
+.dockerignore
+docker-compose.override.yml
+docker-compose.override.yaml
+docker-compose.yml
+docker-compose.yaml
+*.tar
+*.env  # Docker environment variables (if used)
+
+# Ignore Docker build cache files
+.docker/
+*.pid
+.env.*
 
 # Editor directories and files
 .vscode/*
@@ -22,3 +38,39 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# OS or system-specific files
+Thumbs.db
+Desktop.ini
+
+# Build artifact directories
+out/
+coverage/
+.cache/
+.vite/
+*.build/
+
+# Temporary files and backups
+*.tmp
+*.swp
+*.bak
+*.pid
+*.seed
+*.log
+
+# Ignore sensitive environment files
+.env
+.env.local
+.env.*.local
+
+# Ignore debugging and profiling data
+debug.log
+profile
+profile.json
+
+# Ignore IDE-specific files
+*.iml
+*.ipr
+*.iws
+*.class
+.idea/
