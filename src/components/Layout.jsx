@@ -5,6 +5,7 @@ const Layout = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showAllCategories, setShowAllCategories] = useState(false);
+  const [scrollPosition, setScrollPosition] = useState(0);
 
   const colorTheme = {
     primary: "#FF0000",
@@ -81,6 +82,15 @@ const Layout = () => {
     return () => clearInterval(timer);
   }, [slides.length]);
 
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrollPosition(window.scrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % slides.length);
   };
@@ -88,6 +98,8 @@ const Layout = () => {
   const prevSlide = () => {
     setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
   };
+
+  const headerHeight = 112; // Logo height (28px * 4 for py-4) = 112px
 
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: colorTheme.background }}>
@@ -97,7 +109,7 @@ const Layout = () => {
       </div>
 
       {/* Navigation */}
-      <header className="shadow sticky top-0 z-40" style={{ backgroundColor: colorTheme.primary }}>
+      <header className="sticky top-0 z-40 shadow" style={{ backgroundColor: colorTheme.primary }}>
         <div className="max-w-7xl mx-auto px-2 md:px-4">
           <div className="flex items-center h-16">
             <button 
@@ -133,25 +145,28 @@ const Layout = () => {
             </div>
           </div>
         </div>
-      </header>
 
-      {/* Mobile Menu */}
-      {isMenuOpen && (
-        <div className="lg:hidden" style={{ backgroundColor: colorTheme.primary }}>
-          <div className="px-2 pt-2 pb-3 space-y-1">
-            {navCategories.map(category => (
-              <a
-                key={category}
-                href={`/${category.toLowerCase().replace(/ & /g, '-')}`}
-                className="block px-3 py-2 text-base font-medium hover:opacity-80"
-                style={{ color: colorTheme.text }}
-              >
-                {category}
-              </a>
-            ))}
+        {/* Mobile Menu - Now inside header to stick with navbar */}
+        {isMenuOpen && (
+          <div 
+            className="lg:hidden absolute left-0 right-0 shadow-lg"
+            style={{ backgroundColor: colorTheme.primary }}
+          >
+            <div className="px-2 pt-2 pb-3 space-y-1 max-h-[calc(100vh-4rem)] overflow-y-auto">
+              {navCategories.map(category => (
+                <a
+                  key={category}
+                  href={`/${category.toLowerCase().replace(/ & /g, '-')}`}
+                  className="block px-3 py-2 text-base font-medium hover:opacity-80"
+                  style={{ color: colorTheme.text }}
+                >
+                  {category}
+                </a>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </header>
 
       {/* Carousel */}
       <div className="relative bg-white">
@@ -301,7 +316,12 @@ const Layout = () => {
 
             {/* Newsletter */}
             <div className="space-y-4">
-              <h4 className="text-xl font-bold" style={{ color: colorTheme.text }}>Newsletter</h4>
+              <h4
+                className="text-xl font-bold"
+                style={{ color: colorTheme.text }}
+              >
+                Newsletter
+              </h4>
               <div className="max-w-full">
                 <div className="flex flex-col md:flex-row gap-2 max-w-full">
                   <input
@@ -311,7 +331,10 @@ const Layout = () => {
                   />
                   <button
                     className="w-full md:w-auto px-4 py-2 rounded md:rounded-r whitespace-nowrap"
-                    style={{ backgroundColor: colorTheme.accent, color: colorTheme.text }}
+                    style={{
+                      backgroundColor: colorTheme.accent,
+                      color: colorTheme.text,
+                    }}
                   >
                     S'inscrire
                   </button>
