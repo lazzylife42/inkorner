@@ -8,6 +8,9 @@ import Categories from "./components/Categories.jsx";
 import ProductPage from "./components/ProductPage.jsx";
 import { getFeaturedProducts } from "./utils/shopifyClient";
 
+import CategoryPage from './components/CategoryPage';
+import CartPage from './components/CartPage';
+
 function App() {
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -169,6 +172,9 @@ function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/product/:handle" element={<ProductPage colorTheme={colorTheme} />} />
+            <Route path="/category/:category" element={<CategoryPage colorTheme={colorTheme} />} />
+            <Route path="/cart" element={<CartPage colorTheme={colorTheme} />} />
+            <Route path="/marques/:brand" element={<BrandPage colorTheme={colorTheme} />} />
           </Routes>
         </main>
 

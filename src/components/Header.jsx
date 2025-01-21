@@ -1,22 +1,33 @@
 import { useState } from "react";
 import { Menu, X, Search, User, ShoppingCart } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 
 const Header = ({ colorTheme }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const navigate = useNavigate();
 
   const navCategories = [
-    "Accessoires",
-    "Aiguilles & Tubes",
-    "Cartouches",
-    "Encres",
-    "Hygiène",
-    "InKoncious",
-    "Machines",
-    "Mobilier",
-    "Soins",
-    "Solde",
-    "Stencils",
+    { name: "Accessoires", path: "accessoires" },
+    { name: "Aiguilles & Tubes", path: "aiguilles-tubes" },
+    { name: "Cartouches", path: "cartouches" },
+    { name: "Encres", path: "encres" },
+    { name: "Hygiène", path: "hygiene" },
+    { name: "InKoncious", path: "inkoncious" },
+    { name: "Machines", path: "machines" },
+    { name: "Mobilier", path: "mobilier" },
+    { name: "Soins", path: "soins" },
+    { name: "Solde", path: "solde" },
+    { name: "Stencils", path: "stencils" },
   ];
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchTerm.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchTerm.trim())}`);
+      setSearchTerm("");
+    }
+  };
 
   return (
     <header
@@ -35,40 +46,49 @@ const Header = ({ colorTheme }) => {
 
           <nav className="hidden lg:flex space-x-4 flex-grow justify-center overflow-x-auto scrollbar-hide">
             {navCategories.map((category) => (
-              <a
-                key={category}
-                href={`/${category.toLowerCase().replace(/ & /g, "-")}`}
+              <Link
+                key={category.name}
+                to={`/category/${category.path}`}
                 className="transition-all duration-300 whitespace-nowrap hover:scale-105 hover:opacity-80 text-sm"
                 style={{ color: colorTheme.text }}
               >
-                {category}
-              </a>
+                {category.name}
+              </Link>
             ))}
           </nav>
 
           <div className="ml-auto flex items-center space-x-4">
-            <div className="relative w-[280px]">
+            <form onSubmit={handleSearch} className="relative w-[280px]">
               <input
                 type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Rechercher..."
                 className="w-full pl-4 pr-10 py-2 rounded-full text-sm focus:outline-none transition-all duration-300 focus:shadow-lg"
               />
-              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 transition-transform duration-300 hover:scale-110 cursor-pointer" />
-            </div>
+              <button
+                type="submit"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 transition-transform duration-300 hover:scale-110"
+              >
+                <Search className="h-4 w-4 text-gray-400" />
+              </button>
+            </form>
 
             <div className="flex items-center space-x-3">
-              <button
+              <Link
+                to="/account"
                 className="transition-transform duration-300 hover:scale-110"
                 style={{ color: colorTheme.text }}
               >
                 <User className="h-6 w-6" />
-              </button>
-              <button
+              </Link>
+              <Link
+                to="/cart"
                 className="transition-transform duration-300 hover:scale-110"
                 style={{ color: colorTheme.text }}
               >
                 <ShoppingCart className="h-6 w-6" />
-              </button>
+              </Link>
             </div>
           </div>
         </div>
@@ -82,14 +102,15 @@ const Header = ({ colorTheme }) => {
         >
           <div className="px-2 pt-2 pb-3 space-y-1 max-h-[calc(100vh-4rem)] overflow-y-auto">
             {navCategories.map((category) => (
-              <a
-                key={category}
-                href={`/${category.toLowerCase().replace(/ & /g, "-")}`}
+              <Link
+                key={category.name}
+                to={`/category/${category.path}`}
                 className="block px-3 py-2 text-base font-medium transition-all duration-300 hover:scale-105 hover:opacity-80"
                 style={{ color: colorTheme.text }}
+                onClick={() => setIsMenuOpen(false)}
               >
-                {category}
-              </a>
+                {category.name}
+              </Link>
             ))}
           </div>
         </div>
