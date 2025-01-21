@@ -1,7 +1,5 @@
-// src/components/BrandPage.jsx
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { ChevronDown } from 'lucide-react';
 import { getProductsByBrand } from '../utils/shopifyClient';
 
@@ -19,7 +17,6 @@ const BrandPage = ({ colorTheme }) => {
       try {
         const fetchedProducts = await getProductsByBrand(brand);
         
-        // Trier les produits selon le critère sélectionné
         let sortedProducts = [...fetchedProducts];
         switch(sortBy) {
           case 'price-asc':
@@ -31,7 +28,8 @@ const BrandPage = ({ colorTheme }) => {
           case 'name-asc':
             sortedProducts.sort((a, b) => a.title.localeCompare(b.title));
             break;
-          // Le cas 'featured' utilise l'ordre par défaut
+          default:
+            break;
         }
         
         setProducts(sortedProducts);
@@ -46,54 +44,6 @@ const BrandPage = ({ colorTheme }) => {
     fetchProducts();
   }, [brand, sortBy]);
 
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR'
-    }).format(price);
-  };
-
-  const ProductCard = ({ product }) => (
-    <div className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105">
-      <div className="relative aspect-square overflow-hidden">
-        <img 
-          src={product.image} 
-          alt={product.imageAlt || product.title}
-          className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
-        />
-        {product.compareAtPrice && (
-          <div 
-            className="absolute top-2 right-2 px-2 py-1 rounded text-sm font-semibold"
-            style={{ backgroundColor: colorTheme.primary, color: colorTheme.text }}
-          >
-            Promo
-          </div>
-        )}
-      </div>
-      <div className="p-4" style={{ backgroundColor: colorTheme.accent }}>
-        <h3 className="text-white font-medium mb-2 line-clamp-2">{product.title}</h3>
-        <div className="flex items-end gap-2 mb-3">
-          <p className="text-white font-bold">{formatPrice(product.price)}</p>
-          {product.compareAtPrice && (
-            <p className="text-white text-sm line-through opacity-70">
-              {formatPrice(product.compareAtPrice)}
-            </p>
-          )}
-        </div>
-        <Link
-          to={`/product/${product.handle}`}
-          className="block w-full py-2 text-center rounded transition-all duration-300 hover:brightness-110"
-          style={{
-            backgroundColor: colorTheme.primary,
-            color: colorTheme.text,
-          }}
-        >
-          Voir le produit
-        </Link>
-      </div>
-    </div>
-  );
-
   // Formater le nom de la marque pour l'affichage
   const formatBrandName = (brandName) => {
     return brandName.split('-').map(word => 
@@ -102,10 +52,9 @@ const BrandPage = ({ colorTheme }) => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Brand Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-6 mb-6">
+    <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <div className="flex flex-col md:flex-row justify-between items-center mb-8">
+        <div className="flex items-center gap-6 mb-4 md:mb-0">
           <img
             src={`/images/brands/${brand}.jpg`}
             alt={`Logo ${formatBrandName(brand)}`}
@@ -115,58 +64,73 @@ const BrandPage = ({ colorTheme }) => {
             {formatBrandName(brand)}
           </h1>
         </div>
-      </div>
 
-      {/* Sort Controls */}
-      <div className="flex flex-col md:flex-row justify-between mb-6 gap-4">
-        <div className="flex gap-4">
-          <div className="relative">
-            <select
-              className="appearance-none bg-white border rounded-lg px-4 py-2 pr-8 focus:outline-none"
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-            >
-              <option value="featured">Populaire</option>
-              <option value="price-asc">Prix croissant</option>
-              <option value="price-desc">Prix décroissant</option>
-              <option value="name-asc">A-Z</option>
-            </select>
-            <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-          </div>
+        <div className="relative">
+          <select
+            className="appearance-none bg-white border rounded-lg px-4 py-2 pr-8 focus:outline-none"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+          >
+            <option value="featured">Populaire</option>
+            <option value="price-asc">Prix croissant</option>
+            <option value="price-desc">Prix décroissant</option>
+            <option value="name-asc">A-Z</option>
+          </select>
+          <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
         </div>
       </div>
 
-      {/* Error State */}
-      {error && (
-        <div className="text-center py-8" style={{ color: colorTheme.text }}>
-          {error}
-        </div>
-      )}
-
-      {/* Loading State */}
       {loading ? (
-        <div className="flex justify-center items-center h-64">
+        <div className="flex justify-center items-center h-48">
           <div
             className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2"
             style={{ borderColor: colorTheme.text }}
           ></div>
         </div>
+      ) : error ? (
+        <div className="text-center py-8" style={{ color: colorTheme.text }}>
+          {error}
+        </div>
       ) : (
-        <>
-          {/* Empty State */}
-          {products.length === 0 && !error ? (
-            <div className="text-center py-8" style={{ color: colorTheme.text }}>
-              Aucun produit trouvé pour cette marque.
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 justify-items-center">
+          {products.map((product) => (
+            <div
+              key={product.id}
+              className="bg-white rounded-md overflow-hidden border border-white hover:border-gray-300 
+                        transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-white/20 
+                        w-full max-w-[200px] mx-auto group"
+            >
+              <div className="relative w-full pb-[100%] overflow-hidden">
+                <img
+                  src={product.image}
+                  alt={product.title}
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                />
+              </div>
+              <div className="p-3" style={{ backgroundColor: colorTheme.accent }}>
+                <h3 className="text-white font-medium text-xs mb-2 line-clamp-2 h-8">
+                  {product.title}
+                </h3>
+                <p className="text-white font-bold text-sm">
+                  {new Intl.NumberFormat('fr-CH', {
+                    style: 'currency',
+                    currency: 'CHF'
+                  }).format(product.price)}
+                </p>
+                <Link
+                  to={`/product/${product.handle}`}
+                  className="block w-full mt-3 py-1.5 px-3 rounded text-sm text-center transition-all duration-300 hover:brightness-110"
+                  style={{
+                    backgroundColor: colorTheme.primary,
+                    color: colorTheme.text,
+                  }}
+                >
+                  Voir le produit
+                </Link>
+              </div>
             </div>
-          ) : (
-            /* Products Grid */
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {products.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          )}
-        </>
+          ))}
+        </div>
       )}
     </div>
   );

@@ -242,6 +242,99 @@ async function getProductsByBrand(vendor) {
   }
 }
 
+async function getProductsByCategory(category) {
+  try {
+    const response = await fetch(
+      `${SHOPIFY_STORE_URL}/api/graphql`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Shopify-Storefront-Access-Token': SHOPIFY_STOREFRONT_ACCESS_TOKEN
+        },
+        body: JSON.stringify({
+          query: `
+          query getProductsByCategory($tag: String!) {
+            products(first: 50, query: $tag) {
+              edges {
+                node {
+                  id
+                  title
+                  handle
+                  description
+                  availableForSale
+                  priceRange {
+                    minVariantPrice {
+                      amount
+                      currencyCode
+                    }
+                  }
+                  variants(first: 1) {
+                    edges {
+                      node {
+                        id
+                        price {
+                          amount
+                          currencyCode
+                        }
+                        compareAtPrice {
+                          amount
+                          currencyCode
+                        }
+                      }
+                    }
+                  }
+                  images(first: 1) {
+                    edges {
+                      node {
+                        url
+                        altText
+                      }
+                    }
+                  }
+                  tags
+                }
+              }
+            }
+          }
+          `,
+          variables: {
+            tag: `tag:${category}`
+          }
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const json = await response.json();
+    if (json.errors) {
+      throw new Error(json.errors[0].message);
+    }
+
+    return json.data.products.edges.map(({ node }) => ({
+      id: node.id,
+      title: node.title,
+      handle: node.handle,
+      description: node.description,
+      available: node.availableForSale,
+      price: parseFloat(node.priceRange.minVariantPrice.amount),
+      currency: node.priceRange.minVariantPrice.currencyCode,
+      compareAtPrice: node.variants.edges[0]?.node.compareAtPrice ? 
+        parseFloat(node.variants.edges[0].node.compareAtPrice.amount) : null,
+      image: node.images.edges[0]?.node.url,
+      imageAlt: node.images.edges[0]?.node.altText,
+      tags: node.tags
+    }));
+
+  } catch (error) {
+    console.error('Error fetching products by category:', error);
+    throw error;
+  }
+}
+
 // Fonction pour récupérer toutes les marques disponibles
 async function getAllBrands() {
   try {
@@ -286,10 +379,73 @@ async function getAllBrands() {
   }
 }
 
-export { 
-  getFeaturedProducts, 
-  getProductByHandle, 
-  getProductsByCategory, 
-  getProductsByBrand,
-  getAllBrands 
-};
+async function searchProducts(searchTerm) {
+  try {
+    const response = await fetch(
+      `${SHOPIFY_STORE_URL}/api/graphql`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Shopify-Storefront-Access-Token': SHOPIFY_STOREFRONT_ACCESS_TOKEN
+        },
+        body: JSON.stringify({
+          query: `
+          query searchProducts($query: String!) {
+            products(first: 24, query: $query) {
+              edges {
+                node {
+                  id
+                  title
+                  handle
+                  priceRange {
+                    minVariantPrice {
+                      amount
+                      currencyCode
+                    }
+                  }
+                  images(first: 1) {
+                    edges {
+                      node {
+                        url
+                        altText
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          `,
+          variables: {
+            query: searchTerm
+          }
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const json = await response.json();
+    if (json.errors) {
+      throw new Error(json.errors[0].message);
+    }
+
+    return json.data.products.edges.map(({ node }) => ({
+      id: node.id,
+      title: node.title,
+      handle: node.handle,
+      price: parseFloat(node.priceRange.minVariantPrice.amount),
+      currency: node.priceRange.minVariantPrice.currencyCode,
+      image: node.images.edges[0]?.node.url
+    }));
+
+  } catch (error) {
+    console.error('Error searching products:', error);
+    throw error;
+  }
+}
+
+export { getFeaturedProducts, getProductByHandle, getProductsByCategory, getProductsByBrand, searchProducts, getAllBrands };

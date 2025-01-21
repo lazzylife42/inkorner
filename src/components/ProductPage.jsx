@@ -1,213 +1,220 @@
-// src/components/ProductPage.jsx
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { Plus, Minus, Check } from 'lucide-react';
 import { getProductByHandle } from '../utils/shopifyClient';
-import { Minus, Plus, ShoppingCart } from 'lucide-react';
+import { useCart } from '../utils/CartContext';
 
 const ProductPage = ({ colorTheme }) => {
   const { handle } = useParams();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedVariant, setSelectedVariant] = useState(null);
   const [quantity, setQuantity] = useState(1);
+  const [addedToCart, setAddedToCart] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(0);
+  const [selectedVariant, setSelectedVariant] = useState(null);
+  const { addToCart } = useCart();
 
   useEffect(() => {
-    const loadProduct = async () => {
+    const fetchProduct = async () => {
       try {
         setLoading(true);
-        const data = await getProductByHandle(handle);
-        setProduct(data);
-        if (data.variants.edges.length > 0) {
-          const defaultVariant = data.variants.edges.find(
-            ({ node }) => node.availableForSale
-          )?.node || data.variants.edges[0].node;
-          setSelectedVariant(defaultVariant);
-        }
+        const fetchedProduct = await getProductByHandle(handle);
+        setProduct(fetchedProduct);
+        setSelectedVariant(fetchedProduct.variants.edges[0]?.node || null);
       } catch (err) {
-        console.error('Error loading product:', err);
-        setError(err.message);
+        console.error('Error fetching product:', err);
+        setError('Erreur lors du chargement du produit');
       } finally {
         setLoading(false);
       }
     };
 
-    loadProduct();
+    fetchProduct();
   }, [handle]);
 
-  const handleVariantChange = (optionName, value) => {
-    const newSelectedOptions = selectedVariant.selectedOptions.map(option =>
-      option.name === optionName ? { ...option, value } : option
-    );
+  const handleAddToCart = () => {
+    if (!product || !selectedVariant) return;
 
-    const newVariant = product.variants.edges.find(({ node }) =>
-      node.selectedOptions.every(option =>
-        newSelectedOptions.find(newOption =>
-          newOption.name === option.name && newOption.value === option.value
-        )
-      )
-    )?.node;
+    const productToAdd = {
+      id: selectedVariant.id,
+      title: product.title,
+      price: parseFloat(selectedVariant.price.amount),
+      image: product.images.edges[0]?.node.url,
+      handle: product.handle,
+      variant: selectedVariant.title,
+    };
 
-    if (newVariant) {
-      setSelectedVariant(newVariant);
-    }
+    addToCart(productToAdd, quantity);
+    setAddedToCart(true);
+
+    setTimeout(() => {
+      setAddedToCart(false);
+    }, 2000);
   };
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center py-12">
-        <div 
-          className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2" 
-          style={{ borderColor: colorTheme.primary }}
+      <div className="flex justify-center items-center min-h-[50vh]">
+        <div
+          className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2"
+          style={{ borderColor: colorTheme.text }}
         ></div>
       </div>
     );
   }
 
-  if (error) {
+  if (error || !product) {
     return (
-      <div className="flex justify-center items-center py-12">
-        <div className="text-center" style={{ color: colorTheme.text }}>
-          Une erreur est survenue : {error}
-        </div>
+      <div className="container mx-auto px-4 py-8 text-center" style={{ color: colorTheme.text }}>
+        {error || "Produit non trouvé"}
       </div>
     );
   }
 
-  if (!product) return null;
-
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Image principale */}
-        <div className="relative">
-          <div className="relative aspect-square overflow-hidden rounded-lg bg-gray-100">
-            <img
-              src={product.images.edges[0]?.node.url}
-              alt={product.images.edges[0]?.node.altText || product.title}
-              className="h-full w-full object-cover object-center"
-            />
+    <div className="container mx-auto px-4 py-8">
+      <div className="max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Section Images */}
+          <div className="space-y-4">
+            <div className="relative bg-white rounded-lg overflow-hidden">
+              <div className="aspect-square w-full max-h-[400px]">
+                <img
+                  src={product.images.edges[selectedImage]?.node.url}
+                  alt={product.title}
+                  className="w-full h-full object-contain"
+                />
+              </div>
+            </div>
+
+            {/* Galerie miniatures */}
+            {product.images.edges.length > 1 && (
+              <div className="flex gap-2 overflow-x-auto py-2 scrollbar-hide">
+                {product.images.edges.map((image, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedImage(index)}
+                    className={`relative flex-shrink-0 w-16 h-16 bg-white rounded-md overflow-hidden 
+                             border-2 transition-transform duration-300 hover:scale-105
+                             ${selectedImage === index ? 'border-[#9f7833]' : 'border-transparent'}`}
+                  >
+                    <img
+                      src={image.node.url}
+                      alt={`${product.title} - vue ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-        </div>
 
-        {/* Product Info */}
-        <div>
-          {/* Vendor (Brand) */}
-          <p className="text-sm font-medium mb-2" style={{ color: colorTheme.text }}>
-            {product.vendor}
-          </p>
+          {/* Informations produit */}
+          <div className="flex flex-col space-y-6">
+            <div className="space-y-4">
+              <h1 className="text-2xl md:text-3xl font-bold" style={{ color: colorTheme.text }}>
+                {product.title}
+              </h1>
 
-          {/* Title */}
-          <h1 className="text-3xl font-bold mb-4" style={{ color: colorTheme.text }}>
-            {product.title}
-          </h1>
-          
-          {/* Price */}
-          {selectedVariant && (
-            <div className="mb-6">
-              <p className="text-2xl font-bold" style={{ color: colorTheme.text }}>
-                {parseFloat(selectedVariant.price.amount).toFixed(2)} {selectedVariant.price.currencyCode}
-                {selectedVariant.compareAtPrice && (
-                  <span className="ml-2 text-lg line-through opacity-70">
-                    {parseFloat(selectedVariant.compareAtPrice.amount).toFixed(2)} {selectedVariant.compareAtPrice.currencyCode}
+              <div className="text-xl md:text-2xl font-bold" style={{ color: colorTheme.text }}>
+                {selectedVariant ? parseFloat(selectedVariant.price.amount).toFixed(2) : 'N/A'} CHF
+              </div>
+
+              <div style={{ color: colorTheme.text }} className="prose prose-sm md:prose-base max-w-none">
+                <div dangerouslySetInnerHTML={{ __html: product.descriptionHtml }} />
+              </div>
+            </div>
+
+            {/* Sélection des variantes */}
+            <div className="space-y-4">
+              {product.options
+                .filter((option) => option.name !== 'Default Title')
+                .map((option) => (
+                  <div key={option.name} className="flex flex-col space-y-2">
+                    <span className="font-medium" style={{ color: colorTheme.text }}>
+                      {option.name}
+                    </span>
+                    <div className="flex gap-2">
+                      {option.values.map((value) => {
+                        const isAvailable = product.variants.edges.some((v) =>
+                          v.node.selectedOptions.some((o) => o.value === value)
+                        );
+                        return (
+                          <button
+                            key={value}
+                            onClick={() => {
+                              if (isAvailable) {
+                                const variant = product.variants.edges.find((v) =>
+                                  v.node.selectedOptions.some((o) => o.value === value)
+                                )?.node;
+                                setSelectedVariant(variant || selectedVariant);
+                              }
+                            }}
+                            className={`py-2 px-4 rounded-md transition-all duration-300 ${
+                              selectedVariant?.selectedOptions.some((o) => o.value === value)
+                                ? 'bg-[#9f7833] text-white'
+                                : isAvailable
+                                ? 'bg-gray-200'
+                                : 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                            }`}
+                            disabled={!isAvailable}
+                          >
+                            {value}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+            </div>
+
+            {/* Quantité et ajout au panier */}
+            <div className="flex flex-col sm:flex-row gap-4 mt-6">
+              <div className="flex items-center justify-center sm:justify-start space-x-4">
+                <button
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  className="p-2 rounded transition-all duration-300 hover:scale-110"
+                  style={{ backgroundColor: colorTheme.primary }}
+                >
+                  <Minus size={20} color={colorTheme.text} />
+                </button>
+                <span 
+                  className="w-12 text-center text-lg font-medium"
+                  style={{ color: colorTheme.text }}
+                >
+                  {quantity}
+                </span>
+                <button
+                  onClick={() => setQuantity(quantity + 1)}
+                  className="p-2 rounded transition-all duration-300 hover:scale-110"
+                  style={{ backgroundColor: colorTheme.primary }}
+                >
+                  <Plus size={20} color={colorTheme.text} />
+                </button>
+              </div>
+
+              <button
+                onClick={handleAddToCart}
+                className={`flex-1 py-3 px-6 rounded-lg text-center font-medium relative
+                          transition-all duration-300 ${addedToCart ? 'scale-105' : 'hover:scale-105'}`}
+                style={{ 
+                  backgroundColor: addedToCart ? '#22c55e' : colorTheme.primary,
+                  color: colorTheme.text 
+                }}
+                disabled={addedToCart}
+              >
+                <span className={`transition-opacity duration-300 ${addedToCart ? 'opacity-0' : 'opacity-100'}`}>
+                  Ajouter au panier
+                </span>
+                {addedToCart && (
+                  <span className="absolute inset-0 flex items-center justify-center gap-2">
+                    <Check className="w-6 h-6" />
+                    Ajouté !
                   </span>
                 )}
-              </p>
-              {!selectedVariant.availableForSale && (
-                <p className="text-red-500 mt-2">Produit non disponible</p>
-              )}
-            </div>
-          )}
-
-          {/* Product Options */}
-          {product.options.map(option => (
-            option.values.length > 1 && (
-              <div key={option.name} className="mb-6">
-                <h3 className="text-sm font-medium mb-2" style={{ color: colorTheme.text }}>
-                  {option.name}
-                </h3>
-                <div className="grid grid-cols-4 gap-2">
-                  {option.values.map(value => (
-                    <button
-                      key={value}
-                      onClick={() => handleVariantChange(option.name, value)}
-                      className="px-4 py-2 text-sm rounded-md transition-all duration-300 hover:scale-95"
-                      style={{
-                        backgroundColor: selectedVariant?.selectedOptions.some(o => o.name === option.name && o.value === value)
-                          ? colorTheme.primary
-                          : 'transparent',
-                        border: `2px solid ${colorTheme.primary}`,
-                        color: colorTheme.text
-                      }}
-                    >
-                      {value}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )
-          ))}
-
-          {/* Quantity */}
-          <div className="mb-6">
-            <h3 className="text-sm font-medium mb-2" style={{ color: colorTheme.text }}>
-              Quantité
-            </h3>
-            <div className="inline-flex items-center">
-              <button
-                onClick={() => setQuantity(prev => Math.max(1, prev - 1))}
-                className="w-10 h-10 rounded-l-md transition-all duration-300 hover:opacity-80 flex items-center justify-center"
-                style={{ 
-                  backgroundColor: colorTheme.primary,
-                  color: colorTheme.text,
-                }}
-              >
-                <Minus className="h-4 w-4" />
-              </button>
-              <input
-                type="number"
-                min="1"
-                value={quantity}
-                onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                className="w-16 h-10 text-center border-x-0 [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                style={{ 
-                  backgroundColor: colorTheme.primary,
-                  color: colorTheme.text,
-                  borderColor: colorTheme.primary,
-                }}
-              />
-              <button
-                onClick={() => setQuantity(prev => prev + 1)}
-                className="w-10 h-10 rounded-r-md transition-all duration-300 hover:opacity-80 flex items-center justify-center"
-                style={{ 
-                  backgroundColor: colorTheme.primary,
-                  color: colorTheme.text,
-                }}
-              >
-                <Plus className="h-4 w-4" />
               </button>
             </div>
-          </div>
-
-          {/* Add to Cart Button */}
-          <button
-            className="w-full py-3 px-6 rounded-md flex items-center justify-center space-x-2 transition-all duration-300 hover:scale-95"
-            disabled={!selectedVariant?.availableForSale}
-            style={{ 
-              backgroundColor: selectedVariant?.availableForSale ? colorTheme.primary : '#666',
-              color: colorTheme.text,
-              opacity: selectedVariant?.availableForSale ? 1 : 0.7
-            }}
-          >
-            <ShoppingCart className="h-5 w-5" />
-            <span>
-              {selectedVariant?.availableForSale ? 'Ajouter au panier' : 'Non disponible'}
-            </span>
-          </button>
-
-          {/* Description */}
-          <div className="prose max-w-none mt-8" style={{ color: colorTheme.text }}>
-            <div dangerouslySetInnerHTML={{ __html: product.descriptionHtml }} />
           </div>
         </div>
       </div>

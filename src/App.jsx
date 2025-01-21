@@ -1,15 +1,18 @@
 // src/App.jsx
 import { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import { CartProvider } from './utils/CartContext';
 import Header from "./components/Header.jsx";
 import Footer from "./components/Footer.jsx";
 import Carousel from "./components/Carousel.jsx";
 import Categories from "./components/Categories.jsx";
+import SearchPage from "./components/SearchPage.jsx";
 import ProductPage from "./components/ProductPage.jsx";
+import CategoryPage from "./components/CategoryPage.jsx";
+import CartPage from "./components/CartPage.jsx";
+import BrandPage from "./components/BrandPage.jsx";
+import BrandsListPage from "./components/BrandsListPage.jsx";
 import { getFeaturedProducts } from "./utils/shopifyClient";
-
-import CategoryPage from './components/CategoryPage';
-import CartPage from './components/CartPage';
 
 function App() {
   const [featuredProducts, setFeaturedProducts] = useState([]);
@@ -42,11 +45,9 @@ function App() {
   }, []);
 
   const ProductCard = ({ product }) => (
-    <div
-      className="bg-white rounded-md overflow-hidden border border-white hover:border-gray-300 
+    <div className="bg-white rounded-md overflow-hidden border border-white hover:border-gray-300 
                  transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-white/20 
-                 w-full max-w-[240px] mx-auto group"
-    >
+                 w-full max-w-[240px] mx-auto group">
       <div className="relative w-full pb-[100%] overflow-hidden">
         <img
           src={product.image}
@@ -155,32 +156,36 @@ function App() {
 
   return (
     <Router>
-      <div className="min-h-screen flex flex-col" style={{ backgroundColor: colorTheme.background }}>
-        {/* Logo Section */}
-        <Link to="/" className="py-4 px-6" style={{ backgroundColor: colorTheme.background }}>
-          <img
-            src="/logo.svg"
-            alt="Inkorner Logo"
-            className="h-28 mx-auto transition-transform duration-300 hover:scale-105"
-          />
-        </Link>
+      <CartProvider>
+        <div className="min-h-screen flex flex-col" style={{ backgroundColor: colorTheme.background }}>
+          {/* Logo Section */}
+          <Link to="/" className="py-4 px-6" style={{ backgroundColor: colorTheme.background }}>
+            <img
+              src="/logo.svg"
+              alt="Inkorner Logo"
+              className="h-28 mx-auto transition-transform duration-300 hover:scale-105"
+            />
+          </Link>
 
-        {/* Header Component */}
-        <Header colorTheme={colorTheme} />
+          {/* Header Component */}
+          <Header colorTheme={colorTheme} />
 
-        <main className="flex-grow">
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/product/:handle" element={<ProductPage colorTheme={colorTheme} />} />
-            <Route path="/category/:category" element={<CategoryPage colorTheme={colorTheme} />} />
-            <Route path="/cart" element={<CartPage colorTheme={colorTheme} />} />
-            <Route path="/marques/:brand" element={<BrandPage colorTheme={colorTheme} />} />
-          </Routes>
-        </main>
+          <main className="flex-grow">
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/product/:handle" element={<ProductPage colorTheme={colorTheme} />} />
+              <Route path="/category/:category" element={<CategoryPage colorTheme={colorTheme} />} />
+              <Route path="/cart" element={<CartPage colorTheme={colorTheme} />} />
+              <Route path="/marques" element={<BrandsListPage colorTheme={colorTheme} />} />
+              <Route path="/marques/:brand" element={<BrandPage colorTheme={colorTheme} />} />
+              <Route path="/search" element={<SearchPage colorTheme={colorTheme} />} />
+            </Routes>
+          </main>
 
-        {/* Footer Component */}
-        <Footer colorTheme={colorTheme} />
-      </div>
+          {/* Footer Component */}
+          <Footer colorTheme={colorTheme} />
+        </div>
+      </CartProvider>
     </Router>
   );
 }

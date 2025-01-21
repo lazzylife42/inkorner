@@ -1,85 +1,44 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { ChevronDown } from 'lucide-react';
-import { getProductsByCategory } from '../utils/shopifyClient';
+import { useSearchParams, Link } from 'react-router-dom';
+import { searchProducts } from '../utils/shopifyClient';
 
-const CategoryPage = ({ colorTheme }) => {
-  const { category } = useParams();
+const SearchPage = ({ colorTheme }) => {
+  const [searchParams] = useSearchParams();
+  const query = searchParams.get('q');
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [sortBy, setSortBy] = useState('featured');
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchSearchResults = async () => {
+      if (!query) {
+        setLoading(false);
+        return;
+      }
+      
       setLoading(true);
       setError(null);
       try {
-        const fetchedProducts = await getProductsByCategory(category);
-        
-        let sortedProducts = [...fetchedProducts];
-        switch(sortBy) {
-          case 'price-asc':
-            sortedProducts.sort((a, b) => a.price - b.price);
-            break;
-          case 'price-desc':
-            sortedProducts.sort((a, b) => b.price - a.price);
-            break;
-          case 'name-asc':
-            sortedProducts.sort((a, b) => a.title.localeCompare(b.title));
-            break;
-          default:
-            break;
-        }
-        
-        setProducts(sortedProducts);
-      } catch (error) {
-        console.error('Error:', error);
-        setError("Erreur lors du chargement des produits.");
+        const results = await searchProducts(query);
+        setProducts(results);
+      } catch (err) {
+        console.error('Error searching products:', err);
+        setError('Une erreur est survenue lors de la recherche.');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProducts();
-  }, [category, sortBy]);
-
-  const categoryNames = {
-    'nouveautes': 'Nouveautés',
-    'machines': 'Machines',
-    'aiguilles-tubes': 'Aiguilles & Tubes',
-    'encres': 'Encres',
-    'hygiene': 'Hygiène',
-    'cartouches': 'Cartouches',
-    'mobilier': 'Mobilier',
-    'soins': 'Soins',
-    'accessoires': 'Accessoires',
-    'inkoncious': 'InKoncious',
-    'solde': 'Solde',
-    'stencils': 'Stencils'
-  };
+    fetchSearchResults();
+  }, [query]);
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <div className="flex flex-col md:flex-row justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold mb-4 md:mb-0" style={{ color: colorTheme.text }}>
-          {categoryNames[category] || category}
-        </h1>
-
-        <div className="relative">
-          <select
-            className="appearance-none bg-white border rounded-lg px-4 py-2 pr-8 focus:outline-none"
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-          >
-            <option value="featured">Populaire</option>
-            <option value="price-asc">Prix croissant</option>
-            <option value="price-desc">Prix décroissant</option>
-            <option value="name-asc">A-Z</option>
-          </select>
-          <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-        </div>
-      </div>
+      <h2 className="text-2xl font-bold mb-6" style={{ color: colorTheme.text }}>
+        {products.length > 0 
+          ? `Résultats pour "${query}" (${products.length})`
+          : `Aucun résultat pour "${query}"`}
+      </h2>
 
       {loading ? (
         <div className="flex justify-center items-center h-48">
@@ -133,8 +92,26 @@ const CategoryPage = ({ colorTheme }) => {
           ))}
         </div>
       )}
+
+      {!loading && products.length === 0 && (
+        <div className="text-center py-12">
+          <p 
+            className="mb-4"
+            style={{ color: colorTheme.text }}
+          >
+            Essayez avec d'autres mots-clés ou consultez nos catégories.
+          </p>
+          <Link
+            to="/"
+            className="inline-block px-6 py-3 rounded-lg transition-all duration-300 hover:scale-105"
+            style={{ backgroundColor: colorTheme.primary, color: colorTheme.text }}
+          >
+            Retour à l'accueil
+          </Link>
+        </div>
+      )}
     </div>
   );
 };
 
-export default CategoryPage;
+export default SearchPage;
